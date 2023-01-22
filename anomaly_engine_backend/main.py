@@ -1,11 +1,11 @@
-from fastapi import Depends, FastAPI, BackgroundTasks
+import subprocess
+from os.path import exists
+
+from fastapi import Depends, FastAPI
 from sqlalchemy.orm import Session
 
-from . import crud, models, schemas
-from os.path import exists
+from . import crud, schemas
 from .database import SessionLocal
-import subprocess
-
 
 app = FastAPI()
 
@@ -13,9 +13,9 @@ app = FastAPI()
 def create_db():
     test_db = exists('/testdb.db')
 
-    if not test_db:
+    if not test_db or test_db == False:
         subprocess.run(['touch', 'testdb.db'])
-        
+
 
 def run_migration():
     subprocess.run(['alembic', 'upgrade', 'head'])
@@ -58,5 +58,5 @@ def data_definition_store(db: Session = Depends(get_db)):
 
 @app.post('/store-ingest')
 def data_ingest_initial(store_data: schemas.DataIngestPost, db: Session = Depends(get_db)):
-    new_data = crud.store_ingest(db=db, DataIngest=store_data)
+    new_data: schemas.DataIngest = crud.store_ingest(db=db, DataIngest=store_data)
     return new_data
